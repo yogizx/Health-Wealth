@@ -1,5 +1,5 @@
 import { useState } from "react";
-import SignIn from "./assets/pages/Signin";
+import SignIn from "./assets/pages/SignIn";
 import Dashboard from "./assets/pages/Dashboard";
 import Finance from "./assets/pages/Finance";
 import Mindset from "./assets/pages/Mindset";
