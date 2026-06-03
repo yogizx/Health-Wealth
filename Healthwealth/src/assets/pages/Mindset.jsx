@@ -1,15 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import {
-  LayoutDashboard,
-  Wallet,
-  Brain,
-  Activity,
-  User,
-  Search,
-  Bell,
-  HelpCircle,
+  fetchLatestMindsetAssessment,
+  saveMindsetAssessment,
+} from "../../lib/api";
+import {
   Lightbulb,
   TrafficCone,
   Trophy,
@@ -53,10 +49,24 @@ const mindsetItems = [
   "They think they know",
 ];
 
-function Mindset({ activePage, setActivePage, onLogout }) {
+function Mindset({ activePage, setActivePage, onLogout, user }) {
   const [responses, setResponses] = useState(
     new Array(mindsetItems.length).fill(false)
   );
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    fetchLatestMindsetAssessment(user.id)
+      .then((assessment) => {
+        if (assessment?.responses?.length) {
+          setResponses(
+            mindsetItems.map((_, index) => Boolean(assessment.responses[index]))
+          );
+        }
+      })
+      .catch((error) => alert(error.message));
+  }, [user]);
 
   const yesCount = responses.filter(Boolean).length;
   const percentage = Math.round((yesCount / mindsetItems.length) * 100);
@@ -68,59 +78,80 @@ function Mindset({ activePage, setActivePage, onLogout }) {
       return next;
     });
   };
-  return (
-   <div className="h-screen bg-[#f6f8fc] flex text-[#111827] overflow-hidden">
-  <Sidebar
-    activePage={activePage}
-    setActivePage={setActivePage}
-    onLogout={onLogout}
-  />
 
-  <main className="flex-1 h-screen overflow-y-auto">
-    <Navbar activePage={activePage} setActivePage={setActivePage} />
-    
-        <section className="px-10 py-10">
+  const resetResponses = () => {
+    setResponses(new Array(mindsetItems.length).fill(false));
+  };
+
+  const handleSave = async () => {
+    try {
+      if (user?.id) {
+        await saveMindsetAssessment(user.id, responses, percentage);
+      }
+      alert("Mindset analysis saved.");
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row text-slate-900 relative overflow-hidden">
+      {/* Decorative Background Elements */}
+      <div className="absolute top-[-15%] right-[-10%] w-[600px] h-[600px] bg-brand-400/20 blur-[120px] rounded-full pointer-events-none"></div>
+      <div className="absolute bottom-[-15%] left-[-10%] w-[600px] h-[600px] bg-indigo-500/15 blur-[150px] rounded-full pointer-events-none"></div>
+      
+      <Sidebar
+        activePage={activePage}
+        setActivePage={setActivePage}
+        onLogout={onLogout}
+        user={user}
+      />
+
+      <main className="flex-1 md:h-screen md:overflow-y-auto pb-20 md:pb-0">
+        <Navbar activePage={activePage} setActivePage={setActivePage} user={user} />
+        
+        <section className="px-4 md:px-10 py-6 md:py-10">
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h1 className="text-[42px] font-extrabold">Psychology of success</h1>
-                <p className="text-gray-500 text-[18px] mt-3 max-w-2xl">
+                <h1 className="text-[32px] md:text-[42px] font-extrabold tracking-tight text-slate-900">Psychology of success</h1>
+                <p className="text-gray-500 text-[18px] mt-3 max-w-2xl font-medium">
                   Analyze and refine your mental framework for peak performance.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <span className="rounded-full bg-emerald-50 text-emerald-700 px-4 py-2 text-sm font-semibold">
+                <span className="rounded-full bg-emerald-50 text-emerald-700 px-4 py-2 text-sm font-semibold shadow-sm">
                   34 statements
                 </span>
-                <span className="rounded-full bg-blue-50 text-blue-700 px-4 py-2 text-sm font-semibold">
+                <span className="rounded-full bg-brand-50 text-brand-700 px-4 py-2 text-sm font-semibold shadow-sm">
                   yes / no assessment
                 </span>
               </div>
             </div>
 
-            <div className="grid gap-8 xl:grid-cols-[1.75fr_1fr]">
-              <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+            <div className="grid gap-6 md:gap-8 xl:grid-cols-[1.75fr_1fr]">
+              <div className="glass-card rounded-[24px] md:rounded-[32px] border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-lg">
                 <div className="p-7 border-b border-gray-100 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <div className="inline-flex items-center gap-3 rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
+                    <div className="inline-flex items-center gap-3 rounded-full bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-700 shadow-inner">
                       <BarChart3 size={18} /> mindset matrix
                     </div>
-                    <h2 className="mt-4 text-[28px] font-bold text-slate-900">Mindset assessment</h2>
+                    <h2 className="mt-4 text-[24px] md:text-[28px] font-bold text-slate-900">Mindset assessment</h2>
                     <p className="mt-2 text-gray-500 max-w-2xl">
                       Respond to each statement with yes or no to reveal your mindset profile.
                     </p>
                   </div>
                   <div className="grid grid-cols-3 gap-3 sm:grid-cols-3">
-                    <div className="rounded-3xl border border-gray-200 bg-slate-50 p-4 text-center">
-                      <p className="text-xs uppercase tracking-[1px] text-gray-500">completed</p>
+                    <div className="rounded-3xl border border-gray-200 bg-slate-50 p-4 text-center shadow-inner">
+                      <p className="text-xs uppercase tracking-[1px] text-gray-500 font-bold">completed</p>
                       <p className="mt-2 text-[24px] font-bold text-slate-900">{yesCount}</p>
                     </div>
-                    <div className="rounded-3xl border border-gray-200 bg-slate-50 p-4 text-center">
-                      <p className="text-xs uppercase tracking-[1px] text-gray-500">total</p>
+                    <div className="rounded-3xl border border-gray-200 bg-slate-50 p-4 text-center shadow-inner">
+                      <p className="text-xs uppercase tracking-[1px] text-gray-500 font-bold">total</p>
                       <p className="mt-2 text-[24px] font-bold text-slate-900">34</p>
                     </div>
-                    <div className="rounded-3xl border border-gray-200 bg-slate-50 p-4 text-center">
-                      <p className="text-xs uppercase tracking-[1px] text-gray-500">score</p>
+                    <div className="rounded-3xl border border-gray-200 bg-slate-50 p-4 text-center shadow-inner">
+                      <p className="text-xs uppercase tracking-[1px] text-gray-500 font-bold">score</p>
                       <p className="mt-2 text-[24px] font-bold text-slate-900">{percentage}%</p>
                     </div>
                   </div>
@@ -137,13 +168,19 @@ function Mindset({ activePage, setActivePage, onLogout }) {
                   ))}
                 </div>
 
-                <div className="p-6 border-t border-gray-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm text-gray-500">Use the switches to mark each response and track your mindset score.</p>
+                <div className="p-6 border-t border-gray-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-slate-50/50">
+                  <p className="text-sm text-gray-500 font-medium">Use the switches to mark each response and track your mindset score.</p>
                   <div className="flex gap-3">
-                    <button className="rounded-xl border border-gray-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                    <button
+                      onClick={resetResponses}
+                      className="rounded-xl border border-gray-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 shadow-sm"
+                    >
                       Reset all
                     </button>
-                    <button className="rounded-xl bg-[#0757d8] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200/40 hover:bg-[#0646b0]">
+                    <button
+                      onClick={handleSave}
+                      className="rounded-xl bg-gradient-to-r from-[#0757d8] to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-200/50 hover:shadow-brand-300/60 hover:-translate-y-0.5 transition-all"
+                    >
                       Save analysis
                     </button>
                   </div>
@@ -151,68 +188,82 @@ function Mindset({ activePage, setActivePage, onLogout }) {
               </div>
 
               <aside className="space-y-6">
-                <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-8">
+                <div className="glass-card rounded-[24px] md:rounded-[32px] border border-gray-100 shadow-sm p-6 md:p-8 hover:shadow-lg transition-shadow">
                   <p className="text-sm font-semibold uppercase tracking-[1px] text-gray-400">
                     overall mindset
                   </p>
                   <div className="mt-7 flex items-center justify-center">
-                    <div className="relative flex h-[190px] w-[190px] items-center justify-center rounded-full bg-green-50">
-                      <div className="absolute inset-0 rounded-full border-8 border-green-200"></div>
-                      <div className="relative flex h-[140px] w-[140px] items-center justify-center rounded-full bg-white shadow-inner">
+                    <div className="relative flex h-[190px] w-[190px] items-center justify-center rounded-full bg-green-50 shadow-inner">
+                      <div className="absolute inset-0 rounded-full border-8 border-green-200 transition-all"></div>
+                      <div className="relative flex h-[140px] w-[140px] items-center justify-center rounded-full bg-white shadow-lg">
                         <div className="text-center">
-                          <p className="text-xs uppercase tracking-[1px] text-gray-400">progress</p>
-                          <p className="text-[44px] font-extrabold text-green-600">{percentage}%</p>
+                          <p className="text-xs uppercase tracking-[1px] text-gray-400 font-bold">progress</p>
+                          <p className="text-[44px] font-extrabold text-emerald-600 tracking-tighter">{percentage}%</p>
                         </div>
                       </div>
                     </div>
                   </div>
                   <div className="mt-8 text-center">
                     <p className="text-[28px] font-bold text-slate-900">{yesCount}/{mindsetItems.length}</p>
-                    <p className="mt-2 text-sm text-gray-500">positive mindset answers</p>
+                    <p className="mt-2 text-sm text-gray-500 font-medium">positive mindset answers</p>
                   </div>
                   <div className="mt-8 space-y-4">
-                    <div className="rounded-3xl bg-slate-50 p-4">
-                      <p className="text-xs uppercase tracking-[1px] text-gray-400">confidence</p>
-                      <p className="mt-2 text-lg font-semibold text-slate-900">{Math.max(40, percentage)}%</p>
+                    <div className="rounded-3xl bg-slate-50 p-4 shadow-inner">
+                      <p className="text-xs uppercase tracking-[1px] text-gray-400 font-bold">confidence</p>
+                      <p className="mt-2 text-lg font-bold text-slate-900">{Math.max(40, percentage)}%</p>
                     </div>
-                    <div className="rounded-3xl bg-slate-50 p-4">
-                      <p className="text-xs uppercase tracking-[1px] text-gray-400">readiness</p>
-                      <p className="mt-2 text-lg font-semibold text-slate-900">{Math.min(100, percentage + 15)}%</p>
+                    <div className="rounded-3xl bg-slate-50 p-4 shadow-inner">
+                      <p className="text-xs uppercase tracking-[1px] text-gray-400 font-bold">readiness</p>
+                      <p className="mt-2 text-lg font-bold text-slate-900">{Math.min(100, percentage + 15)}%</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-7">
-                  <h2 className="text-[26px] font-bold">Key insights</h2>
-                  <Insight
-                    icon={<Lightbulb />}
-                    title="Dominant growth"
-                    text="Your 'Think big' and 'Growth' traits are highly developed, leading your success path."
-                    blue
-                  />
-                  <Insight
-                    icon={<TrafficCone />}
-                    title="Obstacle handling"
-                    text="You see challenges as opportunities, a core trait of peak performers."
-                    orange
-                  />
-                  <Insight
-                    icon={<Trophy />}
-                    title="Elite performance"
-                    text="Top 5% of participants share your specific mindset profile."
-                    yellow
-                  />
+                <div className="glass-card rounded-[24px] md:rounded-[32px] border border-gray-100 shadow-sm p-5 md:p-7 hover:shadow-lg transition-shadow">
+                  <h2 className="text-[26px] font-bold text-slate-900">Key insights</h2>
+                  {responses[6] && (
+                    <Insight
+                      icon={<Lightbulb />}
+                      title="Dominant growth"
+                      text="Your 'Think big' trait is highly developed, leading your success path."
+                      blue
+                    />
+                  )}
+                  {responses[8] && (
+                    <Insight
+                      icon={<TrafficCone />}
+                      title="Opportunity Focus"
+                      text="You see challenges as opportunities, a core trait of peak performers."
+                      orange
+                    />
+                  )}
+                  {percentage >= 80 && (
+                    <Insight
+                      icon={<Trophy />}
+                      title="Elite performance"
+                      text="Top 20% of participants share your specific elite mindset profile."
+                      yellow
+                    />
+                  )}
+                  {!responses[6] && !responses[8] && percentage < 80 && (
+                    <Insight
+                      icon={<BarChart3 />}
+                      title="Room for Growth"
+                      text="Focus on embracing challenges and thinking bigger to unlock your full potential."
+                      blue
+                    />
+                  )}
                 </div>
 
-                <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#112f93] to-[#0c1b55] p-7 text-white shadow-sm">
+                <div className="relative overflow-hidden rounded-[24px] md:rounded-[32px] bg-gradient-to-br from-[#112f93] to-[#0c1b55] p-6 md:p-7 text-white shadow-xl shadow-brand-900/20 hover:shadow-brand-900/40 transition-shadow">
                   <div className="absolute inset-0 bg-white/5"></div>
                   <div className="relative z-10">
-                    <p className="text-xs font-bold tracking-[2px]">UPGRADE TO PRO</p>
-                    <h3 className="text-[20px] font-bold mt-2">Get AI-driven mentorship</h3>
-                    <p className="mt-4 text-sm text-slate-200">
+                    <p className="text-xs font-bold tracking-[2px] text-brand-200">UPGRADE TO PRO</p>
+                    <h3 className="text-[20px] font-bold mt-2 text-white">Get AI-driven mentorship</h3>
+                    <p className="mt-4 text-sm text-brand-100/80 leading-relaxed">
                       Unlock guided habit plans and mindset coaching that adapts to your profile.
                     </p>
-                    <button className="mt-6 rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-black/10">
+                    <button className="mt-6 rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-900 shadow-lg shadow-black/10 hover:-translate-y-0.5 transition-transform">
                       Explore plans
                     </button>
                   </div>
@@ -226,37 +277,23 @@ function Mindset({ activePage, setActivePage, onLogout }) {
   );
 }
 
-function MenuItem({ icon, text, active, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full h-[50px] px-4 rounded-lg flex items-center gap-4 ${
-        active ? "bg-blue-50 text-[#0757d8] font-semibold" : "text-slate-600"
-      }`}
-    >
-      {icon}
-      {text}
-    </button>
-  );
-}
-
 function MatrixRow({ text, on, onToggle }) {
   return (
-    <div className="h-[58px] px-5 flex items-center justify-between border-b border-gray-50">
-      <p className="text-[16px]">{text}</p>
+    <div className="h-[64px] px-6 flex items-center justify-between border-b border-gray-50 transition-all hover:bg-brand-50/50 group">
+      <p className="text-[16px] font-medium text-slate-700 group-hover:text-brand-900 transition-colors">{text}</p>
 
-      <div className="flex items-center gap-4 text-sm font-bold">
-        <span className={on ? "text-gray-400" : "text-green-600"}>NO</span>
+      <div className="flex items-center gap-4 text-[11px] font-black tracking-widest">
+        <span className={on ? "text-gray-300" : "text-rose-500"}>NO</span>
         <button
           type="button"
           onClick={onToggle}
-          className={`w-[44px] h-[24px] rounded-full px-1 flex items-center transition ${
-            on ? "bg-green-500 justify-end" : "bg-gray-200 justify-start"
+          className={`w-[48px] h-[26px] rounded-full px-1 flex items-center transition-all duration-300 shadow-inner ${
+            on ? "bg-emerald-500 justify-end shadow-emerald-600/50" : "bg-rose-500 justify-start shadow-rose-600/50"
           }`}
         >
-          <span className="w-[18px] h-[18px] bg-white rounded-full"></span>
+          <div className="w-[18px] h-[18px] bg-white rounded-full shadow-sm"></div>
         </button>
-        <span className={on ? "text-green-600" : "text-gray-400"}>YES</span>
+        <span className={on ? "text-emerald-500" : "text-gray-300"}>YES</span>
       </div>
     </div>
   );
@@ -264,23 +301,23 @@ function MatrixRow({ text, on, onToggle }) {
 
 function Insight({ icon, title, text, blue, orange, yellow }) {
   return (
-    <div className="flex gap-4 mt-7">
+    <div className="flex gap-4 mt-7 transition-all hover:translate-x-1 group">
       <div
-        className={`w-10 h-10 rounded-full flex items-center justify-center ${
+        className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-colors ${
           blue
-            ? "bg-blue-50 text-blue-600"
+            ? "bg-brand-50 text-brand-600 group-hover:bg-brand-100"
             : orange
-            ? "bg-orange-50 text-orange-600"
+            ? "bg-orange-50 text-orange-600 group-hover:bg-orange-100"
             : yellow
-            ? "bg-yellow-50 text-yellow-600"
+            ? "bg-yellow-50 text-yellow-600 group-hover:bg-yellow-100"
             : ""
         }`}
       >
         {icon}
       </div>
       <div>
-        <h3 className="font-bold text-[16px]">{title}</h3>
-        <p className="text-gray-500 leading-6 mt-1">{text}</p>
+        <h3 className="font-bold text-[17px] text-slate-800 group-hover:text-brand-900 transition-colors">{title}</h3>
+        <p className="text-gray-500 leading-6 mt-1 text-sm font-medium">{text}</p>
       </div>
     </div>
   );

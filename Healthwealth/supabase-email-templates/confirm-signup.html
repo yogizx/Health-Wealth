@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Confirm your Healthwealth account</title>
+  </head>
+  <body style="margin:0;background:#f6f8fc;font-family:Arial,Helvetica,sans-serif;color:#111827;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f8fc;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;overflow:hidden;box-shadow:0 18px 45px rgba(7,87,230,0.12);">
+            <tr>
+              <td style="background:#0757e6;padding:30px 34px;color:#ffffff;">
+                <div style="font-size:22px;font-weight:800;letter-spacing:0.2px;">Healthwealth</div>
+                <div style="margin-top:8px;font-size:14px;line-height:22px;color:#dbeafe;">Secure access for your finance, health, and mindset dashboard.</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:34px;">
+                <div style="width:56px;height:56px;border-radius:14px;background:#eff6ff;display:inline-block;text-align:center;line-height:56px;font-size:28px;">✓</div>
+                <h1 style="margin:24px 0 10px;font-size:28px;line-height:36px;color:#111827;">Confirm your email address</h1>
+                <p style="margin:0;font-size:16px;line-height:26px;color:#4b5563;">
+                  Hi {{ .Data.user_name }}, welcome to Healthwealth. Please confirm this email address to activate your account and continue to your dashboard.
+                </p>
+                <div style="margin:30px 0;">
+                  <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#0757e6;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:15px 24px;border-radius:10px;box-shadow:0 10px 22px rgba(7,87,230,0.25);">
+                    Confirm Email
+                  </a>
+                </div>
+                <p style="margin:0;font-size:14px;line-height:22px;color:#6b7280;">
+                  If the button does not work, copy and paste this secure link into your browser:
+                </p>
+                <p style="margin:10px 0 0;font-size:13px;line-height:20px;word-break:break-all;color:#0757e6;">
+                  {{ .ConfirmationURL }}
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:22px 34px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+                <p style="margin:0;font-size:13px;line-height:21px;color:#6b7280;">
+                  You received this email because someone signed up for Healthwealth using {{ .Email }}. If this was not you, you can safely ignore this email.
+                </p>
+              </td>
+            </tr>
+          </table>
+          <p style="margin:22px 0 0;font-size:12px;color:#9ca3af;">Healthwealth • FinanceFlow</p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
